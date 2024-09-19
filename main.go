@@ -9,20 +9,18 @@ func main() {
 	const filepathRoot = "."
 	const port = "8080"
 
-	handler := http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot)))
 	cfg := &apiConfig{
 		fileserverHits: 0,
 	}
+	handler := http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot)))
 
 	mux := http.NewServeMux()
 
 	mux.Handle("/app/", cfg.middlewareMetricsInc(handler))
 
-	mux.HandleFunc("/healthz", handlerReadiness)
-
-	mux.HandleFunc("/metrics", cfg.showMetrics)
-
-	mux.HandleFunc("/reset", cfg.resetMetrics)
+	mux.HandleFunc("GET /healthz", handlerReadiness)
+	mux.HandleFunc("GET /metrics", cfg.showMetrics)
+	mux.HandleFunc("GET /reset", cfg.resetMetrics)
 
 	serv := &http.Server{
 		Handler: mux,
