@@ -9,17 +9,20 @@ func main() {
 	const filepathRoot = "."
 	const port = "8080"
 
+	handler := http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot)))
+	cfg := &apiConfig{
+		fileserverHits: 0,
+	}
+
 	mux := http.NewServeMux()
 
-	//strip the /app prefix and use the local file structure
-	mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot))))
+	mux.Handle("/app/", cfg.middlewareMetricsInc(handler))
 
-	// custom route
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte("OK"))
-	})
+	mux.HandleFunc("/healthz", handlerReadiness)
+
+	mux.HandleFunc("/metrics", cfg.showMetrics)
+
+	mux.HandleFunc("/reset", cfg.resetMetrics)
 
 	serv := &http.Server{
 		Handler: mux,
@@ -28,5 +31,4 @@ func main() {
 
 	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
 	log.Fatal(serv.ListenAndServe())
-
 }
