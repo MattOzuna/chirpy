@@ -18,9 +18,9 @@ func main() {
 
 	mux.Handle("/app/", cfg.middlewareMetricsInc(handler))
 
-	mux.HandleFunc("GET /healthz", handlerReadiness)
-	mux.HandleFunc("GET /metrics", cfg.showMetrics)
-	mux.HandleFunc("GET /reset", cfg.resetMetrics)
+	mux.HandleFunc("GET /api/healthz", handlerReadiness)
+	mux.HandleFunc("GET /admin/metrics", cfg.showMetrics)
+	mux.HandleFunc("GET /api/reset", cfg.resetMetrics)
 
 	serv := &http.Server{
 		Handler: mux,
