@@ -51,7 +51,7 @@ func validateChirp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chirp.profanityFilter()
-	dat, err := json.Marshal(chirp)
+	dat, err := json.Marshal(&chirp)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(500)
