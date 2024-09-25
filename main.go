@@ -1,17 +1,40 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/MattOzuna/chirpy/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func main() {
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
+	if dbURL == "" {
+		log.Fatal("DB_URL must be set")
+	}
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Printf("error connecting to DB: %s", err)
+	}
+
+	dbQueries := database.New(db)
+
 	const filepathRoot = "."
 	const port = "8080"
 
 	cfg := &apiConfig{
 		fileserverHits: 0,
+		db:             dbQueries,
+		platform:       platform,
 	}
+
 	handler := http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot)))
 
 	mux := http.NewServeMux()
@@ -19,8 +42,9 @@ func main() {
 	mux.Handle("/app/", cfg.middlewareMetricsInc(handler))
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", cfg.showMetrics)
-	mux.HandleFunc("GET /api/reset", cfg.resetMetrics)
+	mux.HandleFunc("POST /admin/reset", cfg.reset)
 	mux.HandleFunc("POST /api/validate_chirp", validateChirp)
+	mux.HandleFunc("POST /api/users", cfg.createUser)
 
 	serv := &http.Server{
 		Handler: mux,

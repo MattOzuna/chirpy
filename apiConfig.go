@@ -2,11 +2,16 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+
+	"github.com/MattOzuna/chirpy/internal/database"
 )
 
 type apiConfig struct {
 	fileserverHits int
+	db             *database.Queries
+	platform       string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -32,7 +37,21 @@ func (cfg *apiConfig) showMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(content))
 }
 
-func (cfg *apiConfig) resetMetrics(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) reset(w http.ResponseWriter, r *http.Request) {
+	if cfg.platform != "dev" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	err := cfg.db.DeleteUsers(r.Context())
+	if err != nil {
+		log.Printf("Error deleting users: %s", err)
+		w.WriteHeader(500)
+		message := `{"error": "Something went wrong"}`
+		w.Write([]byte(message))
+		return
+	}
+
 	cfg.fileserverHits = 0
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("reset metrics"))
