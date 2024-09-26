@@ -17,11 +17,11 @@ type User struct {
 }
 
 func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
-	params := User{}
+	body := User{}
 	decoder := json.NewDecoder(r.Body)
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := decoder.Decode(&params); err != nil {
+	if err := decoder.Decode(&body); err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		w.WriteHeader(500)
 		message := `{"error": "Something went wrong"}`
@@ -29,7 +29,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.db.CreateUser(r.Context(), params.Email)
+	user, err := cfg.db.CreateUser(r.Context(), body.Email)
 	if err != nil {
 		log.Printf("Error creating user: %s", err)
 		w.WriteHeader(500)
