@@ -4,14 +4,16 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/MattOzuna/chirpy/internal/database"
 )
 
 func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
-	chirp := Chirp{}
+	body := Chirp{}
 	decoder := json.NewDecoder(r.Body)
 	w.Header().Set("Content-Type", "application/json")
 
-	err := decoder.Decode(&chirp)
+	err := decoder.Decode(&body)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		w.WriteHeader(500)
@@ -20,7 +22,7 @@ func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !chirp.isValid() {
+	if !body.isValid() {
 		log.Printf("Chirp invalid")
 		w.WriteHeader(400)
 		message := `{"error": "Chirp is too long"}`
@@ -28,7 +30,29 @@ func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	dbReq := database.CreateChirpParams{
+		Body:   body.Body,
+		UserID: body.UserID,
+	}
+
+	res, err := cfg.db.CreateChirp(r.Context(), dbReq)
+	if err != nil {
+		log.Printf("Error creating chirp: %s", err)
+		w.WriteHeader(500)
+		message := `{"error": "Something went wrong"}`
+		w.Write([]byte(message))
+		return
+	}
+
+	chirp := Chirp{
+		ID:        res.ID,
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
+		Body:      res.Body,
+		UserID:    res.UserID,
+	}
 	chirp.profanityFilter()
+
 	dat, err := json.Marshal(&chirp)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
@@ -36,6 +60,6 @@ func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	w.Write(dat)
 }
