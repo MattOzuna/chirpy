@@ -14,9 +14,13 @@ import (
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
-	platform := os.Getenv("PLATFORM")
 	if dbURL == "" {
 		log.Fatal("DB_URL must be set")
+	}
+
+	platform := os.Getenv("PLATFORM")
+	if platform == "" {
+		log.Fatal("PLATFORM must be set")
 	}
 
 	db, err := sql.Open("postgres", dbURL)
@@ -42,6 +46,8 @@ func main() {
 	mux.Handle("/app/", cfg.middlewareMetricsInc(handler))
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", cfg.showMetrics)
+	mux.HandleFunc("GET /api/chirps", cfg.getAllChirps)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.getChirp)
 	mux.HandleFunc("POST /admin/reset", cfg.reset)
 	mux.HandleFunc("POST /api/chirps", cfg.createChirp)
 	mux.HandleFunc("POST /api/users", cfg.createUser)
