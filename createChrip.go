@@ -11,7 +11,6 @@ import (
 func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 	body := Chirp{}
 	decoder := json.NewDecoder(r.Body)
-	w.Header().Set("Content-Type", "application/json")
 
 	err := decoder.Decode(&body)
 	if err != nil {
@@ -60,6 +59,7 @@ func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	w.Write(dat)
 }

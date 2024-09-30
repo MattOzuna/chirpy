@@ -6,8 +6,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/MattOzuna/chirpy/internal/auth"
+	"github.com/MattOzuna/chirpy/internal/database"
 	"github.com/google/uuid"
 )
+
+type UserReq struct {
+	Password string `json:"password"`
+	Email    string `json:"email"`
+}
 
 type User struct {
 	ID        uuid.UUID `json:"id"`
@@ -17,9 +24,8 @@ type User struct {
 }
 
 func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
-	body := User{}
+	body := UserReq{}
 	decoder := json.NewDecoder(r.Body)
-	w.Header().Set("Content-Type", "application/json")
 
 	if err := decoder.Decode(&body); err != nil {
 		log.Printf("Error decoding parameters: %s", err)
@@ -29,7 +35,29 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.db.CreateUser(r.Context(), body.Email)
+	if body.Password == "" {
+		log.Print("Password not sent with request")
+		w.WriteHeader(500)
+		message := `{"error": "Must include pasword"}`
+		w.Write([]byte(message))
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(body.Password)
+	if err != nil {
+		log.Printf("Error hashing password: %s", err)
+		w.WriteHeader(500)
+		message := `{"error": "Something went wrong"}`
+		w.Write([]byte(message))
+		return
+	}
+
+	dbUser := database.CreateUserParams{
+		Email:          body.Email,
+		HashedPassword: hashedPassword,
+	}
+
+	user, err := cfg.db.CreateUser(r.Context(), dbUser)
 	if err != nil {
 		log.Printf("Error creating user: %s", err)
 		w.WriteHeader(500)
@@ -52,6 +80,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	w.Write(res)
 }
