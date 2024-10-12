@@ -10,7 +10,7 @@ import (
 func TestMakeJWT(t *testing.T) {
 	expiresIn := 24 * time.Hour
 	userID := uuid.New()
-	secret := "superSecret"
+	secret := "super secret"
 
 	_, err := MakeJWT(userID, secret, expiresIn)
 	if err != nil {
