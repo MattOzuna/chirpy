@@ -12,7 +12,8 @@ func TestMakeJWT(t *testing.T) {
 	userID := uuid.New()
 	secret := "super secret"
 
-	_, err := MakeJWT(userID, secret, expiresIn)
+	token, err := MakeJWT(userID, secret, expiresIn)
+	t.Logf("\n token: %v", token)
 	if err != nil {
 		t.Fatalf("makeJWT test failed: %v", err)
 	}
