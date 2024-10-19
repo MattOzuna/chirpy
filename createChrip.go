@@ -5,18 +5,45 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/MattOzuna/chirpy/internal/auth"
 	"github.com/MattOzuna/chirpy/internal/database"
 )
 
 func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
+	authHeader, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		log.Printf("Error getting auth header: %s", err)
+		w.WriteHeader(500)
+		message := `{"error": "Something went wrong"}`
+		w.Write([]byte(message))
+		return
+	}
+
+	UserID, err := auth.ValidateJWT(authHeader, cfg.secret)
+	if err != nil {
+		log.Printf("Error validating JWT: %s", err)
+		w.WriteHeader(500)
+		message := `{"error": "Something went wrong"}`
+		w.Write([]byte(message))
+		return
+	}
+
 	body := Chirp{}
 	decoder := json.NewDecoder(r.Body)
 
-	err := decoder.Decode(&body)
+	err = decoder.Decode(&body)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		w.WriteHeader(500)
 		message := `{"error": "Something went wrong"}`
+		w.Write([]byte(message))
+		return
+	}
+
+	if UserID != body.UserID {
+		log.Printf("Token UserID does not match chirp UserID: %s", err)
+		w.WriteHeader(401)
+		message := `{"error": "You are not authorized"}`
 		w.Write([]byte(message))
 		return
 	}

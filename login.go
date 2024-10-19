@@ -37,11 +37,21 @@ func (cfg apiConfig) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := auth.MakeJWT(user.ID, cfg.secret, body.ExpiresIn)
+	if err != nil {
+		log.Printf("Error making JWT: %v", err)
+		w.WriteHeader(401)
+		message := `{"error":"error making JWT"}`
+		w.Write([]byte(message))
+		return
+	}
+
 	data := User{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt.Time,
 		UpdatedAt: user.UpdatedAt.Time,
 		Email:     user.Email,
+		Token:     token,
 	}
 
 	res, err := json.Marshal(&data)

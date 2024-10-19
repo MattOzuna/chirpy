@@ -14,6 +14,7 @@ import (
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	tokenSecret := os.Getenv("TOKEN_SECRET")
 	if dbURL == "" {
 		log.Fatal("DB_URL must be set")
 	}
@@ -37,6 +38,7 @@ func main() {
 		fileserverHits: 0,
 		db:             dbQueries,
 		platform:       platform,
+		secret:         tokenSecret,
 	}
 
 	handler := http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot)))
