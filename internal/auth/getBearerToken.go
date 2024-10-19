@@ -12,6 +12,6 @@ func GetBearerToken(headers http.Header) (string, error) {
 		err := fmt.Errorf("no 'Authorization' header")
 		return "", err
 	}
-	token = strings.TrimSpace(token)
+	token = strings.TrimPrefix(token, "Bearer ")
 	return token, nil
 }

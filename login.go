@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/MattOzuna/chirpy/internal/auth"
 )
@@ -37,7 +38,7 @@ func (cfg apiConfig) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.MakeJWT(user.ID, cfg.secret, body.ExpiresIn)
+	token, err := auth.MakeJWT(user.ID, cfg.secret, (2 * time.Hour))
 	if err != nil {
 		log.Printf("Error making JWT: %v", err)
 		w.WriteHeader(401)

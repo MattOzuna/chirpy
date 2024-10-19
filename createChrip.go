@@ -40,14 +40,6 @@ func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if UserID != body.UserID {
-		log.Printf("Token UserID does not match chirp UserID: %s", err)
-		w.WriteHeader(401)
-		message := `{"error": "You are not authorized"}`
-		w.Write([]byte(message))
-		return
-	}
-
 	if !body.isValid() {
 		log.Printf("Chirp invalid")
 		w.WriteHeader(400)
@@ -58,7 +50,7 @@ func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 
 	dbReq := database.CreateChirpParams{
 		Body:   body.Body,
-		UserID: body.UserID,
+		UserID: UserID,
 	}
 
 	res, err := cfg.db.CreateChirp(r.Context(), dbReq)
