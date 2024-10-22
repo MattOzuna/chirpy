@@ -36,8 +36,7 @@ func TestValidateJWT(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			token, _ := MakeJWT(tc.userId, tc.secret, tc.expiresIn)
 			// time.Sleep(2 * time.Second)
-			user, err := ValidateJWT(token, "super secret")
-			t.Logf("\nuserID: %v", user)
+			_, err := ValidateJWT(token, "super secret")
 			if err != nil {
 				t.Fatalf("Validate test failed: %v", err)
 			}
