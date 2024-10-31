@@ -12,7 +12,7 @@ func (cfg apiConfig) getAllChirps(w http.ResponseWriter, r *http.Request) {
 	chirps, err := cfg.db.GetAllChirps(r.Context())
 	if err != nil {
 		log.Printf("Error getting chirps: %s", err)
-		w.WriteHeader(500)
+		w.WriteHeader(401)
 		message := `{"error": "Something went wrong"}`
 		w.Write([]byte(message))
 		return

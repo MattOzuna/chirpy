@@ -22,7 +22,7 @@ func (cfg apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 	UserID, err := auth.ValidateJWT(authHeader, cfg.secret)
 	if err != nil {
 		log.Printf("Error validating JWT: %s", err)
-		w.WriteHeader(500)
+		w.WriteHeader(401)
 		message := `{"error": "Something went wrong"}`
 		w.Write([]byte(message))
 		return

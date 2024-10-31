@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MattOzuna/chirpy/internal/auth"
+	"github.com/MattOzuna/chirpy/internal/database"
 )
 
 func (cfg apiConfig) Login(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +39,7 @@ func (cfg apiConfig) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.MakeJWT(user.ID, cfg.secret, (2 * time.Hour))
+	token, err := auth.MakeJWT(user.ID, cfg.secret, (1 * time.Hour))
 	if err != nil {
 		log.Printf("Error making JWT: %v", err)
 		w.WriteHeader(401)
@@ -47,12 +48,38 @@ func (cfg apiConfig) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// =============== Make a Refresh Token and store in DB ===================
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		log.Printf("Error making refresh token: %v", err)
+		w.WriteHeader(401)
+		message := `{"error":"error making refresh token"}`
+		w.Write([]byte(message))
+		return
+	}
+
+	refreshTokenForDB := database.InsertRefreshTokenParams{
+		Token:  refreshToken,
+		UserID: user.ID,
+	}
+
+	_, err = cfg.db.InsertRefreshToken(r.Context(), refreshTokenForDB)
+	if err != nil {
+		log.Printf("Error making refresh token in DB: %v", err)
+		w.WriteHeader(401)
+		message := `{"error":"error making refresh token in DB"}`
+		w.Write([]byte(message))
+		return
+	}
+	//======================================================================//
+
 	data := User{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt.Time,
-		UpdatedAt: user.UpdatedAt.Time,
-		Email:     user.Email,
-		Token:     token,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt.Time,
+		UpdatedAt:    user.UpdatedAt.Time,
+		Email:        user.Email,
+		Token:        token,
+		RefreshToken: refreshToken,
 	}
 
 	res, err := json.Marshal(&data)
