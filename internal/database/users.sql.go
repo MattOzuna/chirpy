@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -46,6 +48,82 @@ DELETE FROM users
 func (q *Queries) DeleteUsers(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteUsers)
 	return err
+}
+
+const editUser = `-- name: EditUser :one
+UPDATE users
+SET hashed_password = $1, email = $2, updated_at = NOW()
+WHERE id = $3
+RETURNING id, created_at, updated_at, email, hashed_password
+`
+
+type EditUserParams struct {
+	HashedPassword string
+	Email          string
+	ID             uuid.UUID
+}
+
+func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, editUser, arg.HashedPassword, arg.Email, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.HashedPassword,
+	)
+	return i, err
+}
+
+const editUserEmail = `-- name: EditUserEmail :one
+UPDATE users
+SET email = $1, updated_at = NOW()
+WHERE id = $2
+RETURNING id, created_at, updated_at, email, hashed_password
+`
+
+type EditUserEmailParams struct {
+	Email string
+	ID    uuid.UUID
+}
+
+func (q *Queries) EditUserEmail(ctx context.Context, arg EditUserEmailParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, editUserEmail, arg.Email, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.HashedPassword,
+	)
+	return i, err
+}
+
+const editUserPassword = `-- name: EditUserPassword :one
+UPDATE users
+SET hashed_password = $1, updated_at = NOW()
+WHERE id = $2
+RETURNING id, created_at, updated_at, email, hashed_password
+`
+
+type EditUserPasswordParams struct {
+	HashedPassword string
+	ID             uuid.UUID
+}
+
+func (q *Queries) EditUserPassword(ctx context.Context, arg EditUserPasswordParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, editUserPassword, arg.HashedPassword, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.HashedPassword,
+	)
+	return i, err
 }
 
 const getUser = `-- name: GetUser :one
