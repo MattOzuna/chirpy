@@ -118,10 +118,11 @@ func (cfg apiConfig) editUser(w http.ResponseWriter, r *http.Request) {
 	// marshall the edited user into JSON and return with 200 code
 
 	data := User{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt.Time,
-		UpdatedAt: user.UpdatedAt.Time,
-		Email:     user.Email,
+		ID:          user.ID,
+		CreatedAt:   user.CreatedAt.Time,
+		UpdatedAt:   user.UpdatedAt.Time,
+		Email:       user.Email,
+		IsChirpyRed: user.IsChirpyRed.Bool,
 	}
 
 	res, err := json.Marshal(&data)

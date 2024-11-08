@@ -80,6 +80,7 @@ func (cfg apiConfig) Login(w http.ResponseWriter, r *http.Request) {
 		Email:        user.Email,
 		Token:        token,
 		RefreshToken: refreshToken,
+		IsChirpyRed:  user.IsChirpyRed.Bool,
 	}
 
 	res, err := json.Marshal(&data)
