@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/MattOzuna/chirpy/internal/auth"
 	"github.com/google/uuid"
 )
 
@@ -18,6 +20,24 @@ type UserID struct {
 }
 
 func (cfg apiConfig) UpgradeUserToRed(w http.ResponseWriter, r *http.Request) {
+	polkaKey := os.Getenv("POLKA_KEY")
+	authHeader, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		log.Printf("Error getting auth header: %s", err)
+		w.WriteHeader(401)
+		message := `{"error": "Something went wrong"}`
+		w.Write([]byte(message))
+		return
+	}
+
+	if authHeader != polkaKey {
+		log.Println("Incorrect auth header")
+		w.WriteHeader(401)
+		message := `{"error": "Something went wrong"}`
+		w.Write([]byte(message))
+		return
+	}
+
 	body := UserUpgrade{}
 
 	decoder := json.NewDecoder(r.Body)
@@ -38,7 +58,7 @@ func (cfg apiConfig) UpgradeUserToRed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := cfg.db.UpgradeUserToRed(r.Context(), body.Data.UserID)
+	err = cfg.db.UpgradeUserToRed(r.Context(), body.Data.UserID)
 	if err != nil {
 		log.Printf("Error upgrading user: %s", err)
 		w.WriteHeader(404)
