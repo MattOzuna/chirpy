@@ -10,8 +10,8 @@ import (
 
 func (cfg apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
 	reqID := r.PathValue("chirpID")
-	i, err := uuid.Parse(reqID)
 
+	i, err := uuid.Parse(reqID)
 	if err != nil {
 		log.Printf("Error converting id into uuid: %s", err)
 		w.WriteHeader(500)
