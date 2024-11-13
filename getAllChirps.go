@@ -11,36 +11,68 @@ import (
 
 func (cfg apiConfig) getAllChirps(w http.ResponseWriter, r *http.Request) {
 	s := r.URL.Query().Get("author_id")
+	sort := r.URL.Query().Get("sort")
 
 	var chirps []database.Chirp
 	var err error
 
-	if s == "" {
-		chirps, err = cfg.db.GetAllChirps(r.Context())
-		if err != nil {
-			log.Printf("Error getting chirps: %s", err)
-			w.WriteHeader(401)
-			message := `{"error": "Something went wrong"}`
-			w.Write([]byte(message))
-			return
+	if sort == "" || sort == "asc" {
+		if s == "" {
+			chirps, err = cfg.db.GetAllChirpsAsc(r.Context())
+			if err != nil {
+				log.Printf("Error getting chirps: %s", err)
+				w.WriteHeader(401)
+				message := `{"error": "Something went wrong"}`
+				w.Write([]byte(message))
+				return
+			}
+		} else {
+			user_id, err := uuid.Parse(s)
+			if err != nil {
+				log.Printf("Error converting id into uuid: %s", err)
+				w.WriteHeader(500)
+				message := `{"error": "Something went wrong"}`
+				w.Write([]byte(message))
+				return
+			}
+
+			chirps, err = cfg.db.GetAllChirpsByUserIDAsc(r.Context(), user_id)
+			if err != nil {
+				log.Printf("Error getting chirps: %s", err)
+				w.WriteHeader(401)
+				message := `{"error": "Something went wrong"}`
+				w.Write([]byte(message))
+				return
+			}
 		}
 	} else {
-		user_id, err := uuid.Parse(s)
-		if err != nil {
-			log.Printf("Error converting id into uuid: %s", err)
-			w.WriteHeader(500)
-			message := `{"error": "Something went wrong"}`
-			w.Write([]byte(message))
-			return
-		}
+		if s == "" {
+			chirps, err = cfg.db.GetAllChirpsDesc(r.Context())
+			if err != nil {
+				log.Printf("Error getting chirps: %s", err)
+				w.WriteHeader(401)
+				message := `{"error": "Something went wrong"}`
+				w.Write([]byte(message))
+				return
+			}
+		} else {
+			user_id, err := uuid.Parse(s)
+			if err != nil {
+				log.Printf("Error converting id into uuid: %s", err)
+				w.WriteHeader(500)
+				message := `{"error": "Something went wrong"}`
+				w.Write([]byte(message))
+				return
+			}
 
-		chirps, err = cfg.db.GetAllChirpsByUserID(r.Context(), user_id)
-		if err != nil {
-			log.Printf("Error getting chirps: %s", err)
-			w.WriteHeader(401)
-			message := `{"error": "Something went wrong"}`
-			w.Write([]byte(message))
-			return
+			chirps, err = cfg.db.GetAllChirpsByUserIDDesc(r.Context(), user_id)
+			if err != nil {
+				log.Printf("Error getting chirps: %s", err)
+				w.WriteHeader(401)
+				message := `{"error": "Something went wrong"}`
+				w.Write([]byte(message))
+				return
+			}
 		}
 	}
 
